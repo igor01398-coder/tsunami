@@ -1,0 +1,7 @@
+{
+  "name": "Copy of TsunamiSim: Coastal Defense Analyzer",
+  "description": "A professional simulation tool for coastal disaster prevention researchers to evaluate tsunami threats based on seabed topography and wave intensity using Gemini AI.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
