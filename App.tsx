@@ -4,8 +4,8 @@ import WaveSimulation from './components/WaveSimulation';
 import AnalysisPanel from './components/AnalysisPanel';
 import LocationPicker from './components/LocationPicker';
 import SimulationHistory from './components/SimulationHistory';
-import { analyzeSimulation, findRealWorldLocations, generateImpactImage } from './services/geminiService';
-import { AnalysisResult, MapLocation, ImageResolution, LocationData, SimulationRecord } from './types';
+import { analyzeSimulation, findRealWorldLocations } from './services/geminiService';
+import { AnalysisResult, MapLocation, LocationData, SimulationRecord } from './types';
 
 const App: React.FC = () => {
   // State
@@ -14,11 +14,8 @@ const App: React.FC = () => {
   const [intensity, setIntensity] = useState<number>(5);
   const [depth, setDepth] = useState<number>(40); // Default 40 meters
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [locations, setLocations] = useState<MapLocation[]>([]);
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-  const [selectedResolution, setSelectedResolution] = useState<ImageResolution>(ImageResolution.RES_1K);
   
   // Location State
   const [showMap, setShowMap] = useState(false);
@@ -103,24 +100,6 @@ const App: React.FC = () => {
       setIsAnalyzing(false);
     }
   };
-
-  const handleGenerateImage = async () => {
-    setIsGeneratingImage(true);
-    try {
-      // Use the estimated wave height from the analysis result for more accurate visuals
-      const waveHeight = analysisResult?.estimatedWaveHeight || 0;
-      const imgUrl = await generateImpactImage(slope, intensity, waveHeight, selectedResolution, selectedLocation?.name);
-      if (imgUrl) {
-        setGeneratedImage(imgUrl);
-      } else {
-        // Handle failure silently
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsGeneratingImage(false);
-    }
-  };
   
   const handleRestoreRecord = (record: SimulationRecord) => {
     setSlope(record.params.slope);
@@ -148,7 +127,7 @@ const App: React.FC = () => {
             <h2 className="text-lg text-ocean-400">Professional Research Environment</h2>
           </div>
           <p className="text-slate-400 text-sm leading-relaxed">
-            此應用程式使用 <strong>Gemini 3.0 Pro</strong> 進行高畫質圖像生成與物理模擬。
+            此應用程式使用 <strong>Gemini 2.5 Flash</strong> 進行進階物理模擬。
             為了存取這些進階模型功能，請連接您的 Google Cloud API Key。
           </p>
           
@@ -359,7 +338,7 @@ const App: React.FC = () => {
 
         </div>
 
-        {/* Right Column: Analysis & Image (5 cols) */}
+        {/* Right Column: Analysis & History (5 cols) */}
         <div className="lg:col-span-5 space-y-6">
           
           {/* Text Analysis */}
@@ -371,61 +350,6 @@ const App: React.FC = () => {
             </div>
             <div className="flex-1 overflow-hidden p-4 relative">
               <AnalysisPanel isLoading={isAnalyzing} result={analysisResult} locations={locations} />
-            </div>
-          </section>
-
-          {/* Image Generation */}
-          <section className="bg-slate-900 rounded-xl border border-slate-800 shadow-xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <span>🖼️</span> 衝擊視覺化 (Visual Impact)
-            </h2>
-            
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 bg-slate-800 p-3 rounded-lg border border-slate-700">
-                 <span className="text-sm text-slate-300">解析度:</span>
-                 <select 
-                    value={selectedResolution}
-                    onChange={(e) => setSelectedResolution(e.target.value as ImageResolution)}
-                    className="bg-slate-900 text-white text-sm rounded border border-slate-600 px-2 py-1 focus:ring-1 focus:ring-ocean-500 outline-none"
-                 >
-                   <option value={ImageResolution.RES_1K}>1K (Standard)</option>
-                   <option value={ImageResolution.RES_2K}>2K (High)</option>
-                   <option value={ImageResolution.RES_4K}>4K (Ultra)</option>
-                 </select>
-                 <button
-                  onClick={handleGenerateImage}
-                  disabled={isGeneratingImage || !analysisResult}
-                  className={`ml-auto text-xs px-3 py-1.5 rounded font-medium transition-colors
-                    ${isGeneratingImage || !analysisResult
-                      ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                      : 'bg-indigo-600 hover:bg-indigo-500 text-white'
-                    }`}
-                 >
-                   {isGeneratingImage ? '生成中...' : '生成預覽圖'}
-                 </button>
-              </div>
-
-              <div className="aspect-video bg-black rounded-lg border border-slate-700 overflow-hidden relative group">
-                {generatedImage ? (
-                  <img src={generatedImage} alt="Simulated Tsunami Impact" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-slate-600 space-y-2">
-                    <span className="text-4xl opacity-20">🌊</span>
-                    <p className="text-xs">尚未生成圖像</p>
-                    {!analysisResult && <p className="text-[10px] text-orange-400">請先執行模擬分析</p>}
-                  </div>
-                )}
-                
-                {generatedImage && (
-                   <a 
-                    href={generatedImage} 
-                    download={`tsunami-impact-${slope}-${intensity}.png`}
-                    className="absolute bottom-2 right-2 bg-black/70 hover:bg-black/90 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                   >
-                     下載圖片
-                   </a>
-                )}
-              </div>
             </div>
           </section>
 

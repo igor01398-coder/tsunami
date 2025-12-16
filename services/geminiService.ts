@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { AnalysisResult, MapLocation, ImageResolution, LocationData } from "../types";
+import { AnalysisResult, MapLocation, LocationData } from "../types";
 
 // Note: GoogleGenAI instance is created inside functions to ensure 
 // it uses the latest API key from process.env.API_KEY
@@ -174,78 +174,5 @@ export const findRealWorldLocations = async (slope: number): Promise<MapLocation
   } catch (error) {
     console.error("Maps Error:", error);
     return [];
-  }
-};
-
-export const generateImpactImage = async (
-  slope: number,
-  intensity: number,
-  waveHeight: number, // Use the calculated wave height from analysis
-  resolution: ImageResolution,
-  locationName?: string
-): Promise<string | null> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-  const locPrompt = locationName ? `Location: Coastal area of ${locationName}.` : "Location: Coastal town.";
-  let prompt = "";
-
-  // Logic: Use the calculated Wave Height (Threat Assessment) to determine visual scale
-  
-  if (waveHeight < 3) {
-    // Scenario: Manageable / Safe
-    prompt = `A photorealistic, reassuring wide shot of a safe coastal town. 
-    ${locPrompt}
-    The ocean is active with high tide, about ${waveHeight} meters rise, but completely manageable. 
-    A sturdy, well-engineered concrete seawall is successfully holding back the water, protecting the city behind it.
-    The scene conveys safety, resilience, and effective disaster prevention infrastructure.
-    Lighting is bright and hopeful, golden hour or clear day. 
-    High detail, 8k resolution, cinematic composition.`;
-  } else {
-    // Scenario: Threat / Disaster
-    const isGentle = slope < 5;
-    
-    // Define water behavior based on slope physics
-    const waterBehavior = isGentle 
-        ? `Massive Shoaling Effect: The wave forms a solid, wide 'Wall of Water' approximately ${waveHeight} meters high, overwhelming the horizon.` 
-        : `Violent Reflection & Splash-up: The wave is chaotic and turbulent, crashing violently against the shore with a vertical spray height of ${waveHeight} meters, but less horizontal thickness than a shoaling wave.`;
-    
-    // Define severity based on height
-    const severity = waveHeight > 10 
-        ? "CATASTROPHIC DESTRUCTION. The water is overtopping the defense barriers significantly." 
-        : "SEVERE IMPACT. The waves are hammering the seawall, creating massive spray and localized flooding.";
-
-    prompt = `A photorealistic, cinematic shot of a tsunami impact. 
-    ${locPrompt}
-    ${waterBehavior}
-    ${severity}
-    The seawall is struggling against the force of nature.
-    The scene conveys danger, power, and the specific hydraulic characteristics of a ${isGentle ? 'gentle slope (stacking wave)' : 'steep slope (crashing/reflecting wave)'}.
-    Gloomy, dramatic, stormy lighting, dark atmosphere. 
-    High detail, 8k resolution style.`;
-  }
-
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-pro-image-preview",
-      contents: {
-        parts: [{ text: prompt }]
-      },
-      config: {
-        imageConfig: {
-          aspectRatio: "16:9",
-          imageSize: resolution
-        }
-      }
-    });
-
-    for (const part of response.candidates?.[0]?.content?.parts || []) {
-      if (part.inlineData) {
-        return `data:image/png;base64,${part.inlineData.data}`;
-      }
-    }
-    return null;
-  } catch (error) {
-    console.error("Image Gen Error:", error);
-    return null;
   }
 };

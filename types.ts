@@ -15,17 +15,6 @@ export interface MapLocation {
   uri: string;
 }
 
-export enum ImageResolution {
-  RES_1K = "1K",
-  RES_2K = "2K",
-  RES_4K = "4K"
-}
-
-export interface GeneratedImage {
-  url: string;
-  resolution: ImageResolution;
-}
-
 export interface LocationData {
   name: string;
   lat: number;
